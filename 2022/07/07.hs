@@ -33,7 +33,6 @@ pt2 ls = minimum . filter (>= required) . map snd . dirSizes $ ns
 total = 70_000_000
 tgt = 30_000_000
 
-
 dirSizes :: Node -> [(String,Int)]
 dirSizes (File _ _) = []
 dirSizes d@(Dir s ns) = (s, nSize d):(concat $ map dirSizes ns)
