@@ -1,19 +1,11 @@
 module Day01 (pt1, pt2) where
 
-import System.IO
 import Data.List
 import Data.Maybe
 import qualified Data.Map as Map
 
-getLines :: String -> IO ([String])
-getLines filename = do
-  handle <- openFile filename ReadMode
-  contents <- hGetContents handle
-  return $ lines contents
-
 pt1 :: [String] -> Int
-pt1 lines = sum $ map (uncurry diff) (sortedPairs (map parse lines))
-  
+pt1 = sum . map (uncurry diff) . sortedPairs . map parse 
 
 diff :: Num a => a -> a -> a
 diff x y = abs (x-y) 
@@ -29,12 +21,11 @@ parse line = (a,b)
   where a:b:_ = map (read::String->Int) $ words line 
 
 
-
 --
 
 pt2 :: [String] -> Int
-pt2 lines = sum (map (similarity tallyMap) listL)
-  where (listL, listR) = unzip $ map parse lines
+pt2 ls = sum (map (similarity tallyMap) listL)
+  where (listL, listR) = unzip $ map parse ls
         tallyMap = tally listR
 
 similarity :: Map.Map Int Int -> Int -> Int
