@@ -1,3 +1,5 @@
+module Day02 (pt1, pt2) where
+
 import System.IO
 import Data.List
 import Data.Maybe
