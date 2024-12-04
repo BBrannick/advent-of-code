@@ -4,21 +4,17 @@ import Data.List
 import Text.Regex
 
 pt1 :: String -> Int
-pt1 str = sum $ map (occs xmasRegex) [hor, ver, diag, negDiag]
-  where hor = lines str
-        ver = transpose hor
-        diag = diagonals (reverse hor)
-        negDiag = diagonals hor
+pt1 str = sum $ map (occs xmasRegex) [rows, cols, diag, negDiag]
+  where rows = lines str
+        cols = transpose rows
+        diag = diagonals (reverse rows)
+        negDiag = diagonals rows
 
 occs :: Regex -> [String] -> Int
-occs rx strs = sum $ map (countMatches rx) strs
-
-pt2 :: String -> Int
-pt2 = length
+occs rx = sum . map (countMatches rx) 
 
 countMatches :: Regex -> String -> Int
 countMatches rx str = case matchRegexAll rx str of
-                        Nothing -> 0
                         Just (_,(_:mas),rest,_) -> 1 + countMatches rx (mas++rest)
                         _ -> 0
 
@@ -36,3 +32,24 @@ diagonals' (l:ls) n
 
 xmasRegex :: Regex
 xmasRegex = mkRegex "(XMAS|SAMX)"
+
+---
+---
+
+pt2 :: String -> Int
+pt2 = sum . window3Map countInRow . lines
+
+countInRow :: (String,String,String) -> Int
+countInRow (top@('M':_:'S':_), mid@(_:'A':_), bot@('M':_:'S':_)) = 1 + countInRow (tail top,tail mid, tail bot)
+countInRow (top@('M':_:'M':_), mid@(_:'A':_), bot@('S':_:'S':_)) = 1 + countInRow (tail top,tail mid, tail bot)
+countInRow (top@('S':_:'S':_), mid@(_:'A':_), bot@('M':_:'M':_)) = 1 + countInRow (tail top,tail mid, tail bot)
+countInRow (top@('S':_:'M':_), mid@(_:'A':_), bot@('S':_:'M':_)) = 1 + countInRow (tail top,tail mid, tail bot)
+countInRow (_:top,_:mid,_:bot) = countInRow (top,mid,bot)
+countInRow _ = 0
+
+window3Map :: ((a,a,a) -> b) -> [a] -> [b]
+window3Map _ [] = []
+window3Map _ [_] = []
+window3Map _ [_,_] = []
+window3Map f (x:y:z:rest) = (f (x,y,z)):(window3Map f (y:z:rest))
+
