@@ -65,6 +65,7 @@ executable x2024
     other-modules:    Day01
                     , Day02
                     , Day03
+                    , Day04
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
