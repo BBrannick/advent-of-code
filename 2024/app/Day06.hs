@@ -1,8 +1,7 @@
 module Day06 (pt1, pt2) where
 
-import Data.List (init, splitAt, nub)
+import Data.List (nub)
 import Data.Maybe
-import qualified Debug.Trace as Db
 
 data Dir = N | E | S | W deriving (Show,Eq)
 
@@ -28,11 +27,11 @@ parse str = (m, cs, (N,p))
 
 
 doStep :: [Pos] -> State -> Maybe (State,[Pos])
-doStep ps map@(m, obs, pos@(d,p)) 
-  | pos `elem` ps = Db.traceShow m Nothing
+doStep ps s@(m, obs, pos@(d,p)) 
+  | pos `elem` ps = Nothing
   | otherwise = if onMap p m 
                    then doStep (pos:ps) (m', obs, pos') 
-                   else Just (map,ps) 
+                   else Just (s,ps) 
                      where pos' = pStep obs (d,p) 
                            m' = mapSet p 'X' m
 
@@ -58,6 +57,13 @@ next (d, (x,y)) = (d, case d of
                       S -> (x,y+1)
                       W -> (x-1,y))
 
+prev :: Pos -> Pos
+prev (d, (x,y)) = (d, case d of
+                      N -> (x,y+1)
+                      E -> (x-1,y)
+                      S -> (x,y-1)
+                      W -> (x+1,y))
+
 onMap :: Coord -> Map -> Bool
 onMap (x,y) m = 0 <= y && y < (length m) && 0 <= x && x < (length (head m))
 
@@ -73,22 +79,25 @@ mapSet (x,y) c m = rsPre ++ ((rPre ++ (c:rPost)):(rsPost))
         (rPre, (_:rPost)) = splitAt x row
 
 
--- TODO: remove positions the guard has already passed
 pt2 :: String -> Int
-pt2 str = length candidates
+pt2 str = length loopSpaces
   where 
     s@(m,obs,_) = parse str
-    ((m',_,_),(_:ps)) = fromJust $ doStep [] s -- drop last step out of bounds
+    (_,(_:ps)) = fromJust $ doStep [] s -- drop last step out of bounds
     ps' = filter (not.facingOb obs) ps
-    candidates =  nub . map snd . map next . take 1 . filter (loops m' obs) $ ps'
+    candidates = map next ps' -- obstacles are placed in front of the guard
+    -- candidates are backwards, so remove obstacles that would have been placed earlier
+    candidates' = removeSeenLater candidates 
+    loopSpaces = nub . map snd . filter (loops m obs) $ candidates'
 
 loops :: Map -> [Coord] -> Pos -> Bool
-loops m obs p = let (d,c) = next p in 
-                    case doStep [] (mapSet c 'O' m,(c:obs),turn p) of 
+loops m obs (d,c) = case doStep [] (mapSet c 'O' m,(c:obs),prev (d,c)) of 
                       Nothing -> True 
                       Just _ -> False
 
-
-
-
+removeSeenLater :: [Pos] -> [Pos]
+removeSeenLater [] = []
+removeSeenLater ((d,c):ps)
+  | c `elem` (map snd ps) = removeSeenLater ps
+  | otherwise = (d,c):(removeSeenLater ps)
 
