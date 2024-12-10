@@ -1,21 +1,18 @@
 module Day10 (pt1, pt2) where
 
-import Data.Char (digitToInt)
 import Data.List (nub)
+import Grid (intsFromString, inBounds, findAll)
 
 pt1 :: String -> Int
 pt1 s = sum . map (score m) $ trailheads m
-  where m = parse s
+  where m = intsFromString s
 
 pt2 :: String -> Int
 pt2 s = sum . map (rating m) $ trailheads m
-  where m = parse s
-
-parse :: String -> [[Int]]
-parse = map (map (\c -> if c == '.' then (-1) else digitToInt c)) . lines
+  where m = intsFromString s
 
 trailheads :: [[Int]] -> [(Int,Int)]
-trailheads m = [(x,y) | x <- [0..(length (head m) - 1)], y <- [0..length m - 1], m!!y!!x == 0]
+trailheads m = findAll m 0
 
 score :: [[Int]] -> (Int,Int) -> Int
 score m c = length . nub $ paths 1 m c
@@ -33,8 +30,5 @@ paths n m (x,y)
 
 steps :: [[Int]] -> (Int,Int) -> [(Int,Int)]
 steps m (x,y) = filter (inBounds m) [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
-
-inBounds :: [[Int]] -> (Int,Int) -> Bool
-inBounds m (x,y) = 0 <= y && y < (length m) && 0 <= x && x < (length (head m))
 
 
