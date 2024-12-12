@@ -15,8 +15,19 @@ next xs = foldr (\x acc -> (stones x) ++ acc) [] xs
 stones :: Int -> [Int]
 stones 0 = [1]
 stones x
-  | even (length (show x)) = map (read::String->Int) . unTuple . bisect $ show x
+  -- | even (length (show x)) = map (read::String->Int) . unTuple . bisect $ show x
+  | even (digits x) = split x
   | otherwise = [2024*x]
+
+split :: Int -> [Int]
+split n = unTuple (divMod n p)
+  where p = 10^((digits n) `div` 2)
+
+digits :: Int -> Int
+digits = (+1) . floor . logBase 10 . fromIntegral
+
+tuple :: [a] -> (a,a)
+tuple (x:y:_) = (x,y)
 
 unTuple :: (a,a) -> [a]
 unTuple (x,y) = [x,y]
