@@ -1,21 +1,28 @@
 module Day11 (pt1, pt2) where
 
+import qualified Data.Map as M
+
 pt1 :: String -> Int
-pt1 = length . (!!25) . iterate next . parse
+pt1 = main 25
 
 pt2 :: String -> Int
-pt2 = length . (!!75) . iterate next . parse
+pt2 = main 75
 
-parse :: String -> [Int]
-parse = map (read::String->Int) . words
+main :: Int -> String -> Int
+main x = M.foldr (+) 0 . (!!x) . iterate next' . parse
 
-next :: [Int] -> [Int]
-next xs = foldr (\x acc -> (stones x) ++ acc) [] xs
+parse :: String -> M.Map Int Int
+parse = toMap . map (read::String->Int) . words
+
+toMap :: [Int] -> M.Map Int Int
+toMap = M.fromListWith (+) . (flip zip) (repeat 1) 
+
+next' :: M.Map Int Int -> M.Map Int Int
+next' m = M.foldrWithKey (\k n map -> M.unionWith (+) (M.map (*n) (toMap (stones k))) map) M.empty m
 
 stones :: Int -> [Int]
 stones 0 = [1]
 stones x
-  -- | even (length (show x)) = map (read::String->Int) . unTuple . bisect $ show x
   | even (digits x) = split x
   | otherwise = [2024*x]
 
@@ -26,11 +33,5 @@ split n = unTuple (divMod n p)
 digits :: Int -> Int
 digits = (+1) . floor . logBase 10 . fromIntegral
 
-tuple :: [a] -> (a,a)
-tuple (x:y:_) = (x,y)
-
 unTuple :: (a,a) -> [a]
 unTuple (x,y) = [x,y]
-
-bisect :: [a] -> ([a],[a])
-bisect xs = splitAt ((length xs) `div` 2) xs
