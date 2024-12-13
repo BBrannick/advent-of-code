@@ -9,16 +9,16 @@ pt2 :: String -> Int
 pt2 = main 75
 
 main :: Int -> String -> Int
-main x = M.foldr (+) 0 . (!!x) . iterate next' . parse
+main x = M.foldr (+) 0 . (!!x) . iterate blink . parse
 
 parse :: String -> M.Map Int Int
-parse = toMap . map (read::String->Int) . words
+parse = tally . map (read::String->Int) . words
 
-toMap :: [Int] -> M.Map Int Int
-toMap = M.fromListWith (+) . (flip zip) (repeat 1) 
+tally :: [Int] -> M.Map Int Int
+tally = M.fromListWith (+) . (flip zip) (repeat 1) 
 
-next' :: M.Map Int Int -> M.Map Int Int
-next' m = M.foldrWithKey (\k n map -> M.unionWith (+) (M.map (*n) (toMap (stones k))) map) M.empty m
+blink :: M.Map Int Int -> M.Map Int Int
+blink m = M.foldrWithKey (\k n map -> M.unionWith (+) (M.map (*n) (tally (stones k))) map) M.empty m
 
 stones :: Int -> [Int]
 stones 0 = [1]
