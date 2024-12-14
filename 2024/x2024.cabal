@@ -73,13 +73,14 @@ executable x2024
                     , Day09
                     , Day10
                     , Day11
+                    , Day12
                     , Grid
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.2.1
+    build-depends:    base ^>=4.18.2.1
                     , split
                     , containers
                     , regex-compat

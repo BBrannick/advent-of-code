@@ -1,4 +1,14 @@
-module Grid (fromString, intsFromString, inBounds, findAll) where
+module Grid ( 
+  Grid,
+  Coord,
+  fromString,
+  intsFromString,
+  bounds,
+  inBounds,
+  findAt,
+  findAll, 
+  setCoord
+            ) where
 
 import Data.Char (digitToInt)
 
@@ -11,9 +21,22 @@ fromString = lines
 intsFromString :: String -> Grid Int
 intsFromString = map (map digitToInt) . lines
 
+bounds :: Grid a -> Coord
+bounds g = (length (head g) - 1, length g - 1)
+
 inBounds :: Grid a -> Coord -> Bool
-inBounds m (x,y) = 0 <= y && y < (length m) && 0 <= x && x < (length (head m))
+inBounds g (x,y) = 0 <= y && y <= my && 0 <= x && x <= mx
+  where (mx,my) = bounds g
+
+findAt :: Grid a -> Coord -> a
+findAt g (x,y) = g!!y!!x
 
 findAll :: Eq a => Grid a -> a -> [Coord]
-findAll g c = [(x,y) | x <- [0..(length (head g) - 1)], y <- [0..length g - 1], g!!y!!x == c]
+findAll g c = [(x,y) | x <- [0..mx], y <- [0..my], g!!y!!x == c]
+  where (mx,my) = bounds g
+
+setCoord :: Coord -> a -> Grid a -> Grid a
+setCoord (x,y) c m = rsPre ++ ((rPre ++ (c:rPost)):(rsPost))
+  where (rsPre, (row:rsPost)) = splitAt y m
+        (rPre, (_:rPost)) = splitAt x row
 
