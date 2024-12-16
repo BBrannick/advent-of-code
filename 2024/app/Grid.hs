@@ -7,7 +7,8 @@ module Grid (
   inBounds,
   findAt,
   findAll, 
-  setCoord
+  setCoord,
+  draw
             ) where
 
 import Data.Char (digitToInt)
@@ -40,3 +41,5 @@ setCoord (x,y) c m = rsPre ++ ((rPre ++ (c:rPost)):(rsPost))
   where (rsPre, (row:rsPost)) = splitAt y m
         (rPre, (_:rPost)) = splitAt x row
 
+draw :: Grid Char -> IO ()
+draw = mapM_ putStrLn 

@@ -52,7 +52,7 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -Wno-type-defaults
 
 executable x2024
     -- Import common warning flags.
@@ -75,6 +75,7 @@ executable x2024
                     , Day11
                     , Day12
                     , Day13
+                    , Day14
                     , Grid
 
     -- LANGUAGE extensions used by modules in this package.
@@ -85,6 +86,7 @@ executable x2024
                     , split
                     , containers
                     , regex-compat
+                    , time
 
     -- Directories containing source files.
     hs-source-dirs:   app
