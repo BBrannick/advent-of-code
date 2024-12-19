@@ -2,7 +2,6 @@ module Day18 (pt1,pt2) where
 
 import Data.List
 import Data.List.Split
-import Debug.Trace
 import Grid
 import Data.Maybe
 import qualified Data.PQueue.Min as PQ
@@ -23,18 +22,6 @@ pt2 input = findFailure end coords start
     isDemo = (length coords) < 100
     end = if isDemo then (6,6) else (70,70)
     start = if isDemo then 12 else 1024
-
-_main :: Bool -> IO ()
-_main isDemo = do
-  input <- readFile (if isDemo then "data/18_demo.txt" else "data/18.txt")
-  let coords = parse input 
-      end@(x,y) = if isDemo then (6,6) else (70,70) 
-      coords' = take (if isDemo then 12 else 1024) coords
-      g = setCoords (gridOf '.' (x+1,y+1)) (zip coords' (repeat '#'))
-  draw g
-  let (p,pc) = fromMaybe ([],0) $ path end coords'
-      g' = setCoords g (zip p (repeat 'O'))
-  draw g'
 
 findFailure :: Coord -> [Coord] -> Int -> Coord
 findFailure end allBlocks i = case path end (take (i+1) allBlocks) of
@@ -70,14 +57,14 @@ findPath g end opens costs parents = if current == end
     nbrs' = filter (\n -> maybe True (\cn -> cn > (costCurr + (cost current n))) $ M.lookup n costs) nbrs
     (costs',parents',opens'') = foldr (\n (cs,ps,os) ->
       let newCost = costCurr + (cost current n)
-          costs' = M.insert n newCost cs
-          parents' = M.insert n current ps
-          opens'' = PQ.insert (newCost + (estCost n end), n) os
-       in (costs', parents', opens'')
+          cs' = M.insert n newCost cs
+          ps' = M.insert n current ps
+          os' = PQ.insert (newCost + (estCost n end), n) os
+       in (cs', ps', os')
                                       ) (costs, parents, opens') nbrs'
 
 traceParents :: M.Map Coord Coord -> Coord -> [Coord]
-traceParents m n = catMaybes . takeWhile isJust $ iterate (maybe Nothing (\n -> M.lookup n m)) (Just n)
+traceParents m coord = catMaybes . takeWhile isJust $ iterate (maybe Nothing (\c -> M.lookup c m)) (Just coord)
 
 cost :: Coord -> Coord -> Int
 cost _ _ = 1

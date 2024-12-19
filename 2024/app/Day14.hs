@@ -1,4 +1,4 @@
-module Day14 (pt1, pt2) where
+module Day14 (main, pt1, pt2, pt2IO, printLowEntropies) where
 
 import Control.Monad
 import Data.List (partition, sort)
@@ -8,7 +8,6 @@ import Text.Regex
 import Grid
 
 
---type Coord = (Int,Int)
 type Bot = (Coord,Coord)
 
 
@@ -17,7 +16,6 @@ main :: IO ()
 main = do
   input <- readFile "data/14.txt"
   let bots = map parse (lines input)
-      bs = (101,103)
   forever $ do
     stepsStr <- getLine
     let steps = (read::String->Int) stepsStr
@@ -44,11 +42,11 @@ pt2IO = do
     findCandidates bots l l'
 --- 
 findCandidates :: [Bot] -> Int -> Int -> IO ()
-findCandidates bots lines botsinline = do
+findCandidates bots ls botsinline = do
   let lims = (101,103)
-  forM [1..(101*103)] (\n -> do
+  _ <- forM [1..(101*103)] (\n -> do
     let bots' = map (step n lims) bots
-    when (candidate bots' lines botsinline) $ do
+    when (candidate bots' ls botsinline) $ do
       let g = divg . toGrid lims $ bots
       putStrLn (show n)
       draw g
@@ -60,13 +58,12 @@ candidate :: [Bot] -> Int -> Int -> Bool
 candidate bs n n' = (>=n) . length . filter (>=n') . M.elems . M.fromListWith (+) . flip zip (repeat 1) . map (snd.fst) $ bs
 
 
---- I gave up on naming conventions
-foo :: IO ()
-foo = do
+printLowEntropies :: IO ()
+printLowEntropies = do
   input <- readFile "data/14.txt"
   let s = pt2 input
       bots = map parse (lines input)
-  forM s (printAfterSteps bots)
+  _ <- forM s (printAfterSteps bots)
   print "done"
 
 pt1 :: String -> Int
@@ -106,8 +103,6 @@ toGrid (mx,my) bs = map (map (\c -> if c == 0 then '.' else intToDigit c)) .
   foldr (\(c,_) g -> setCoord c ((findAt g c)+1) g) igrid 
   $ bs 
   where igrid = replicate my (replicate mx 0) 
-        hx = mx `div` 2
-        hy = my `div` 2
 
 --- Parsing
 
