@@ -8,7 +8,6 @@ import Text.Regex
 import Grid
 
 
---type Coord = (Int,Int)
 type Bot = (Coord,Coord)
 
 
