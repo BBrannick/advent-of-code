@@ -81,9 +81,6 @@ moveBoxR' cs n = case c of
 placeBox' :: Grid Char -> Coord -> Grid Char
 placeBox' g (x,y) = setCoords g [((x,y),'['),((x+1,y),']')]
 
-setCoords :: Grid Char -> [(Coord,Char)] -> Grid Char
-setCoords = foldr (uncurry setCoord)
-
 next :: Coord -> Char -> Coord
 next (x,y) c = case c of
                  '^' -> (x,y-1)

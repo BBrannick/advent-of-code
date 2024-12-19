@@ -88,6 +88,9 @@ executable x2024
                     , containers
                     , regex-compat
                     , time
+                    , pqueue
+                    , hashmap
+                    , hashable
 
     -- Directories containing source files.
     hs-source-dirs:   app
