@@ -1,5 +1,6 @@
 module Day18 (pt1,pt2) where
 
+import Data.List
 import Data.List.Split
 import Debug.Trace
 import Grid
@@ -8,15 +9,20 @@ import qualified Data.PQueue.Min as PQ
 import qualified Data.HashMap as M
 
 pt1 :: String -> Int
-pt1 input = pathCost end coords'
+pt1 input = fromJust $ pathCost end coords'
   where
     coords = parse input
     isDemo = (length coords) < 100
     end = if isDemo then (6,6) else (70,70)
     coords' = take (if isDemo then 12 else 1024) coords
 
-pt2 :: String -> Int
-pt2 = length
+pt2 :: String -> (Int,Int)
+pt2 input = findFailure end coords start
+  where
+    coords = parse input
+    isDemo = (length coords) < 100
+    end = if isDemo then (6,6) else (70,70)
+    start = if isDemo then 12 else 1024
 
 _main :: Bool -> IO ()
 _main isDemo = do
@@ -26,15 +32,22 @@ _main isDemo = do
       coords' = take (if isDemo then 12 else 1024) coords
       g = setCoords (gridOf '.' (x+1,y+1)) (zip coords' (repeat '#'))
   draw g
-  let (p,pc) = path end coords'
+  let (p,pc) = fromMaybe ([],0) $ path end coords'
       g' = setCoords g (zip p (repeat 'O'))
   draw g'
 
+findFailure :: Coord -> [Coord] -> Int -> Coord
+findFailure end allBlocks i = case path end (take (i+1) allBlocks) of
+                                Nothing -> allBlocks!!i
+                                Just (foundPath,_) -> findFailure end allBlocks i'
+                                  where i' = i + (fromJust $ findIndex (`elem` foundPath) futureBlocks) + 1
+                                        futureBlocks = drop (i+1) allBlocks
 
-pathCost :: Coord -> [Coord] -> Int
-pathCost c blocks = snd $ path c blocks
 
-path :: Coord -> [Coord] -> ([Coord],Int)
+pathCost :: Coord -> [Coord] -> Maybe Int
+pathCost c blocks = fmap snd $ path c blocks
+
+path :: Coord -> [Coord] -> Maybe ([Coord],Int)
 path (x,y) blocks = findPath g (x,y) opens costs parents
   where
     g = setCoords (gridOf '.' (x+1,y+1)) (zip blocks (repeat '#'))
@@ -42,9 +55,10 @@ path (x,y) blocks = findPath g (x,y) opens costs parents
     costs = M.singleton (0,0) 0
     parents = M.empty
 
-findPath :: Grid Char -> Coord -> PQ.MinQueue (Int,Coord) -> M.Map Coord Int -> M.Map Coord Coord -> ([Coord],Int)
+findPath :: Grid Char -> Coord -> PQ.MinQueue (Int,Coord) -> M.Map Coord Int -> M.Map Coord Coord -> Maybe ([Coord],Int)
+findPath _ _ PQ.Empty _ _ = Nothing
 findPath g end opens costs parents = if current == end 
-                                                then (
+                                                then Just (
                                                   traceParents parents current, 
                                                   fromJust (M.lookup current costs)
                                                      ) 
