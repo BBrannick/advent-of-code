@@ -1,6 +1,7 @@
 module Grid 
   ( Grid
   , Coord
+  , gridOf
   , fromString
   , intsFromString
   , bounds
@@ -18,6 +19,9 @@ import Data.List (uncons)
 
 type Grid a = [[a]]
 type Coord = (Int,Int)
+
+gridOf :: a -> Coord -> Grid a
+gridOf c (x,y) = replicate y (replicate x c)
 
 fromString :: String -> Grid Char
 fromString = lines
