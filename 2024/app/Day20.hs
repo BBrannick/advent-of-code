@@ -8,29 +8,51 @@ import qualified Data.HashMap as M
 
 import Control.Monad
 
+-- Helper to visualise the results
 main :: Bool -> IO ()
 main isDemo = do
-  input <- readFile (if isDemo then "data/20_demo.txt" else "data/20.txt")
+  let fileIn = if isDemo then "data/20_demo.txt" else "data/20.txt"
+      threshold = if isDemo then 50 else 100
+  input <- readFile fileIn
   let grid = fromString input 
       start = fst . fromJust . uncons $ findAll grid 'S' 
       end = fst . fromJust . uncons $ findAll grid 'E' 
       (steps,totalCost,costs) = fromJust $ path grid start end
   faster <- forM steps (\s -> do
-    let cheatSteps = cheats grid s
-        faster = filter ((>=100).snd) . map (\c -> (c,(M.findWithDefault 0 c costs) - ((M.findWithDefault 0 s costs) + 2))) $ cheatSteps
+    let cheatSteps = cheats 20 grid s
+        faster = filter (\(_,_,val) -> val >= threshold) . map (\c -> (s,c,cheatVal costs s c)) $ cheatSteps
     return faster
     )
   let allFaster = concat faster
-  putStrLn $ show (length allFaster)
+  putStrLn $ show (allFaster)
 
 pt1 :: String -> Int
-pt1 = length
+pt1 input = countCheats 2 100 grid start end
+  where grid = fromString input 
+        start = fst . fromJust . uncons $ findAll grid 'S' 
+        end = fst . fromJust . uncons $ findAll grid 'E' 
 
 pt2 :: String -> Int
-pt2 = length
+pt2 input = countCheats 20 100 grid start end
+  where grid = fromString input 
+        start = fst . fromJust . uncons $ findAll grid 'S' 
+        end = fst . fromJust . uncons $ findAll grid 'E' 
 
-cheats :: Grid Char -> Coord -> [Coord]
-cheats g (x,y) = filter (\c -> inBounds g c && findAt g c /= '#') $ [(x-2,y),(x+2,y),(x,y-2),(x,y+2)]
+countCheats :: Int -> Int -> Grid Char -> Coord -> Coord -> Int
+countCheats lim thresh g start end = length faster
+  where (steps,_,costs) = fromJust $ path g start end
+        faster = concatMap (\s -> filter ((>=thresh) . cheatVal costs s) $ cheats lim g s) steps
+
+cheats :: Int -> Grid Char -> Coord -> [Coord]
+cheats lim g (x,y) = filter (\c -> inBounds g c && findAt g c /= '#') $ opts
+  where opts = [(x+vx,y+vy) | vx <- [-lim..lim], vy <- [-lim..lim], (abs vx) + (abs vy) <= abs lim]
+
+-- yes this is duplicated from estCost
+cheatCost :: Coord -> Coord -> Int
+cheatCost (x,y) (x',y') = (abs (y'-y)) + (abs (x'-x))
+
+cheatVal :: M.Map Coord Int -> Coord -> Coord -> Int
+cheatVal costs s e = (M.findWithDefault 0 e costs) - ((M.findWithDefault 0 s costs) + (cheatCost s e))
 
 ------- TODO: Extract pathfinding to module
 
