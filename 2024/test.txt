@@ -1,0 +1,12 @@
+z10: AND x10 y10
+gpr: XOR htv whd
+htv: XOR y10 x10
+
+z21: AND ptd scj
+nks: XOR scj ptd
+ptd: XOR y21 x21
+
+z33: OR jtg, trf
+ghp: XOR tkq mvc
+tkq: XOR y33 x33
+
