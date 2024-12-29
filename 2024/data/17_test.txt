@@ -1,0 +1,22 @@
+## Instructions in my puzzle input
+BST 4: Set B to (A mod 8)
+BXL 3: Set B to (B xor 3)
+CDV 5: Set C to (A >> B)
+ADV 3: Set A to (A div 8)
+BXL 5: Set B to (B xor 5)
+BXC 1: Set B to (B xor C)
+OUT 5: Output (B mod 8)
+JNZ 0: Loop if A is not 0
+
+## Breakdown of registers each loop
+A = A div 8
+C = A >> ((A mod 8) XOR 3)
+B = (((A mod 8) XOR 3) XOR 5) XOR (A >> ((A mod 8) XOR 3))
+
+last digit 0: 110
+digit 3: 110101
+
+## A required to output tails of the operands
+6
+53
+429
