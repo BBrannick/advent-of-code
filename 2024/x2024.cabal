@@ -81,6 +81,7 @@ executable x2024
                     , Day17
                     , Day18
                     , Day19
+                    , Day22
                     , Grid
 
     -- LANGUAGE extensions used by modules in this package.
