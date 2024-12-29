@@ -2,7 +2,8 @@ module Day12 (pt1, pt2) where
 
 import Grid
 import qualified Data.Map as M
-import Debug.Trace
+
+data Dir = N | E | S | W deriving (Show,Eq,Enum)
 
 pt1 :: String -> Int
 pt1 s = M.foldr (\(a,p) acc -> acc + (a*p)) 0 $ foldr (\c m -> updateMap regions m c) M.empty coords
@@ -10,9 +11,6 @@ pt1 s = M.foldr (\(a,p) acc -> acc + (a*p)) 0 $ foldr (\c m -> updateMap regions
         (mx,my) = bounds grid
         coords = [(x,y) | y <- [0..my], x <- [0..mx]]
         regions = labelGrid grid
-  {-
-pt1 s = sum.map snd.snd $ foldr (\(x,y) (g,rs) -> let (g',r) = region' g (x,y) in (g',r:rs)) (grid,[]) coords
--}
 
 updateMap :: Grid Int -> M.Map Int (Int,Int) -> Coord -> M.Map Int (Int,Int)
 updateMap g m c@(x,y) = M.insertWith (\(a,p) (a',p') -> (a+a',p+p')) r (area,perim) m
@@ -49,23 +47,76 @@ mapRegion' i gc gi ch (x,y) = (gc'', gi'')
         gi' = foldr (\co grid -> setCoord co i grid) gi nexts
         (gc'',gi'') = foldr (\co (fgc, fgi) -> mapRegion' i fgc fgi ch co) (gc',gi') nexts
 
-{-
-region' :: Grid Char -> Coord -> (Grid Char,(Int,Int))
-region' g (x,y) = plot (setCoord (x,y) '!' g) c (x,y)
-  where c = findAt g (x,y)
-
-plot :: Grid Char -> Char -> Coord -> (Grid Char,(Int,Int))
-plot g c (x,y) = traceShowId $ (setCoord (x,y) '.' g'', (1+area, (4-(length sibs)) + perim))
-  where adjs = filter (inBounds g) [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
-        sibs = filter ((\a -> a == c || a == '!') . findAt g) adjs
-        nexts = filter ((==c) . findAt g) sibs
-        gWithSeen = foldr (\co grid -> setCoord co '!' grid) g nexts
-        (g'',(area,perim)) = foldr (\co (gr,(a,p)) -> let (gr',(a',p')) = plot gr c co in (gr',(a+a',p+p'))) (gWithSeen,(0,0)) nexts
-
--}
-
-
+-- it got worse
 pt2 :: String -> Int
-pt2 = length
+pt2 input = fst $ foldl' (\(acc,g) c -> let (x,g') = processRegion g c in (acc+x,g')) (0,grid) coords
+  where
+    grid = fromString input
+    (mx,my) = bounds grid
+    coords = [(x,y) | y <- [0..my], x <- [0..mx]]
 
+processRegion :: Grid Char -> Coord -> (Int,Grid Char)
+processRegion g c 
+  | findAt g c == '.' = (0,g)
+  | otherwise = (a * (s+inners),g')
+  where coords = regionCoords g c
+        a = length coords
+        (s,seen) = sides g c N
+        inners = innerSides g (findAt g c) coords seen
+        g' = setCoords g $ zip coords (repeat '.')
+
+regionCoords :: Eq a => Grid a -> Coord -> [Coord]
+regionCoords g c = rcs g [c] [c]
+
+rcs :: Eq a => Grid a -> [Coord] -> [Coord] -> [Coord]
+rcs _ [] seen = seen
+rcs g ((x,y):candidates) seen = rcs g (candidates++news) (seen++news)
+  where regionId = findAt g (x,y)
+        adjs = filter ((==regionId) . findAt g) . filter (inBounds g) $ [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+        news = filter (not.(`elem` seen)) adjs
+
+
+turnR :: Dir -> Dir
+turnR W = N
+turnR d = succ d
+
+turnL :: Dir -> Dir
+turnL N = W
+turnL d = pred d
+
+sides :: Eq a => Grid a -> Coord -> Dir -> (Int,[(Coord,Dir)])
+sides g c d = sides' g (findAt g c) c [] d 0
+
+sides' :: Eq a => Grid a -> a -> Coord -> [(Coord,Dir)] -> Dir -> Int -> (Int,[(Coord,Dir)])
+sides' g x c seen dir acc
+  | (c,dir) `elem` seen = (acc,seen)
+  | (inBounds g leftC) && (left == x) = sides' g x leftC ((c,dir):seen) leftD (acc+1)
+  | (not (inBounds g frontC)) || (front /= x) = sides' g x c ((c,dir):seen) (turnR dir) (acc+1)
+  | otherwise = sides' g x frontC ((c,dir):seen) dir acc
+  where 
+    frontC = next dir c
+    front = findAt g frontC
+    (leftC,leftD) = followL dir c
+    left = findAt g leftC
+
+innerSides :: Eq a => Grid a -> a -> [Coord] -> [(Coord,Dir)] -> Int
+innerSides g x coords seen = fst $ foldr (\(c,d) (acc,seen') -> if (c,d) `elem` seen' 
+                                                                   then (acc,seen') 
+                                                                   else let (ss,seen'') = sides g c d 
+                                                                         in (acc + ss, seen'' ++ seen')
+                                                                        ) (0,[]) candidates
+  where candidates = filter (not.(`elem` seen)) . filter ((/=x) . findAt g . adjacent ) . filter (inBounds g . adjacent) . concatMap edges $ coords
+        edges = (\c -> zip (repeat c) [N,E,S,W,E])
+        adjacent = (\(c,d) -> next (turnL d) c)
+
+
+next :: Dir -> Coord -> Coord
+next d (x,y) = case d of
+                 N -> (x,y-1)
+                 E -> (x+1,y)
+                 S -> (x,y+1)
+                 W -> (x-1,y)
+
+followL :: Dir -> Coord -> (Coord,Dir)
+followL d c = let d' = turnL d in (next d' c, d')
 
