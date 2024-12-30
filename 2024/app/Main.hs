@@ -1,13 +1,16 @@
 module Main where
 
-import Day12 (pt1, pt2)
+import Day16 (pt1, pt2)
 
 main :: IO ()
 main = do
-  demoData <- readFile "data/12_demo.txt"
-  realData <- readFile "data/12.txt"
+  demoData <- readFile "data/16_demo1.txt"
+  demo2Data <- readFile "data/16_demo2.txt"
+  realData <- readFile "data/16.txt"
   print $ pt1 demoData
+  print $ pt1 demo2Data
   print $ pt1 realData
   print $ pt2 demoData
+  print $ pt2 demo2Data
   print $ pt2 realData
 

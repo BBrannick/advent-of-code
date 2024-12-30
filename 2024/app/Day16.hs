@@ -1,7 +1,7 @@
-module Day16 (pt1, pt2) where
+module Day16 (pt1, pt2, main) where
 
-import Debug.Trace
 import Grid
+import Data.List (nub, union)
 import Data.Maybe
 import qualified Data.PQueue.Min as PQ
 import qualified Data.HashMap as M
@@ -17,25 +17,18 @@ pt1 :: String -> Int
 pt1 = pathCost . parse
 
 pt2 :: String -> Int
-pt2 = length
+pt2 = length . nub . map fst . pathNodes . parse
 
 main :: IO ()
 main = do
   input <- readFile "data/16_demo1.txt"
-  let state@(g,s,d,e) = parse input
+  let state@(g,s,d,_) = parse input
       opens = PQ.singleton (0,(s,d))
       costs = M.singleton (s,d) 0
       parents = M.empty
       ns = fst $ findPath state opens costs parents
       g' = tracePath g ns
   draw g'
-
-pathCost :: State -> Int
-pathCost state@(g,str,d,end) = snd (findPath state opens costs parents)
-  where
-    opens = PQ.singleton (0,(str,d))
-    costs = M.singleton (str,d) 0
-    parents = M.empty
 
 tracePath :: Grid Char -> [Node] -> Grid Char
 tracePath g ns = setCoords g $ map (fmap (\d -> case d of 
@@ -44,28 +37,45 @@ tracePath g ns = setCoords g $ map (fmap (\d -> case d of
                                            S -> 'v' 
                                            W -> '<')) ns
 
-findPath :: State -> PQ.MinQueue (Int,Node) -> M.Map Node Int -> M.Map Node Node -> ([Node],Int)
-findPath s@(g,_,_,end) opens costs parents = if (fst current) == end 
-                                                then (
-                                                  traceParents parents current, 
-                                                  fromJust (M.lookup current costs)
-                                                     ) 
+pathCost :: State -> Int
+pathCost = snd . findPath'
+
+pathNodes :: State -> [Node]
+pathNodes = fst . findPath'
+
+findPath' :: State -> ([Node],Int)
+findPath' state@(_,str,d,_) = findPath state opens costs parents
+  where
+    opens = PQ.singleton (0,(str,d))
+    costs = M.singleton (str,d) 0
+    parents = M.empty
+
+findPath :: State -> PQ.MinQueue (Int,Node) -> M.Map Node Int -> M.Map Node [Node] -> ([Node],Int)
+findPath s@(g,_,_,end) opens costs parents = if (fst current) == end
+                                                then if maybe True ((prio <) . fst) (PQ.getMin opens') -- no remaining potential equally short path
+                                                        then (
+                                                        traceParents parents current,
+                                                        fromJust (M.lookup current costs)
+                                                             ) 
+                                                        else findPath s opens' costs parents
                                                 else findPath s opens'' costs' parents'
   where
-    ((_,current),opens') = PQ.deleteFindMin opens
+    ((prio,current),opens') = PQ.deleteFindMin opens
     costCurr = M.findWithDefault 0 current costs
     nbrs = neighbours g current
-    nbrs' = filter (\n -> maybe True (\cn -> cn > (costCurr + (cost current n))) $ M.lookup n costs) nbrs
     (costs',parents',opens'') = foldr (\n (cs,ps,os) ->
-      let newCost = costCurr + (cost current n)
-          costs' = M.insert n newCost cs
-          parents' = M.insert n current ps
-          opens'' = PQ.insert (newCost + (estCost n end), n) os
-       in (costs', parents', opens'')
-                                      ) (costs, parents, opens') nbrs'
+      let oldCost = M.lookup n costs 
+          newCost = costCurr + (cost current n)
+          cs' = M.insert n newCost cs
+          ps' = M.insertWith (if maybe False (newCost==) oldCost then union else flip const) n [current] ps
+          os' = PQ.insert (newCost + (estCost n end), n) os
+       in if maybe False (newCost >) oldCost
+             then (cs,ps,os)
+             else (cs',ps',os')
+                                      ) (costs, parents, opens') nbrs
 
-traceParents :: M.Map Node Node -> Node -> [Node]
-traceParents m n = catMaybes . takeWhile isJust $ iterate (maybe Nothing (\n -> M.lookup n m)) (Just n)
+traceParents :: M.Map Node [Node] -> Node -> [Node]
+traceParents m node = concat . takeWhile (not.null) . iterate (concatMap (\n -> M.findWithDefault [] n m)) $ [node]
 
 cost :: Node -> Node -> Int
 cost (_,d) (_,d') 
