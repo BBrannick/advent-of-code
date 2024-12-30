@@ -23,13 +23,29 @@ cost ((ax,ay),(bx,by),(tx,ty)) = if a_rem == 0 && b_rem == 0
   where (a_presses,a_rem) = divMod ((tx*by)-(ty*bx)) ((ax*by)-(ay*bx))
         (b_presses,b_rem) = divMod (tx - (a_presses * ax)) bx
 
-  {- Initial idea was here
-      Idea was to find the intersection of B intersecting with (0,0), and A 
+--- PARSING LOGIC
+
+parse :: Int -> String -> [Mach]
+parse offset = map (parseMach offset) . init . splitOn "\n\n"
+
+parseMach :: Int -> String -> Mach
+parseMach offset s = case map parseLn (lines s) of 
+                       [a,b,(tx,ty)] -> (a,b,(tx+offset, ty+offset))
+                       _ -> error "failed to parse"
+
+parseLn :: String -> Coord
+parseLn s = case matchRegex (mkRegex "([0-9]+), Y.([0-9]+)") s of
+               Just [x,y] -> ((read::String->Int) x, (read::String->Int) y)
+               _ -> error "failed to parse"
+
+--- Initial Pt2 idea
+  {- Idea was to find the intersection of B intersecting with (0,0), and A 
       intersecting with the target, then check that B could reach that point in 
       an integer number of presses, and A could reach the target in an integer
       number of presses.
       That answer was too low, I'm still not certain why, but the above
-      solution is cleaner anyway. I've left this here for posterity
+      solution is cleaner anyway. I've left this here for posterity and because
+      I spent too long on it to delete it without crying
       -}
 _fullCost :: Mach -> Maybe Int
 _fullCost (a,b,t) = case (costIA,costBI) of
@@ -59,27 +75,5 @@ intersection (ax,ay) (bx,by) (tx,ty) = (ix,iy)
         c = (fromIntegral ty) - ((fromIntegral tx) * (((fromIntegral::Int->Double) ay)/(fromIntegral ax)))
         ix = floor $ ((fromIntegral bx)*(fromIntegral ax)*c) / denom
         iy = floor $ ((fromIntegral by)*(fromIntegral ax)*c) / denom
-
---- PARSING LOGIC
-
-parse :: Int -> String -> [Mach]
-parse offset = map (parseMach offset) . init . splitOn "\n\n"
-
-parseMach :: Int -> String -> Mach
-parseMach offset s = case zipWith ($) [parseBtn, parseBtn, parseTgt offset] (lines s) of
-                       [a,b,t] -> (a,b,t)
-                       _ -> error "failed to parse"
-
-parseBtn :: String -> Coord
-parseBtn = parseLn (mkRegex "X\\+([0-9]+), Y\\+([0-9]+)")
-
-parseTgt :: Int -> String -> Coord
-parseTgt offset s = (x+offset,y+offset)
-  where (x,y) = parseLn (mkRegex "X=([0-9]+), Y=([0-9]+)") s
-
-parseLn :: Regex -> String -> Coord
-parseLn r s = case matchRegex r s of
-               Just [x,y] -> ((read::String->Int) x, (read::String->Int) y)
-               _ -> error "failed to parse"
 
 
