@@ -5,19 +5,19 @@ import Data.Char
 import Data.Ord
 
 pt1 :: String -> Int
-pt1 = sum . map (maxJolt . (map digitToInt)) . lines
+pt1 = sum . map (jolt2 . map digitToInt) . lines
 
 pt2 :: String -> Int
 pt2 = sum . map (joltN 12 . map digitToInt) . lines
 
-maxJolt :: [Int] -> Int
-maxJolt = maxJolt' 0 0 
+jolt2 :: [Int] -> Int
+jolt2 = jolt2' 0 0 
 
-maxJolt' :: Int -> Int -> [Int] -> Int
-maxJolt' cl cr [x] = (cl*10) + (max cr x)
-maxJolt' cl cr (x:xs)
-  | x > cl = maxJolt' x 0 xs
-  | otherwise = maxJolt' cl (max cr x) xs
+jolt2' :: Int -> Int -> [Int] -> Int
+jolt2' cl cr [x] = (cl*10) + (max cr x)
+jolt2' cl cr (x:xs)
+  | x > cl = jolt2' x 0 xs
+  | otherwise = jolt2' cl (max cr x) xs
 
 joltN :: Int -> [Int] -> Int
 joltN 1 xs = maximum xs
