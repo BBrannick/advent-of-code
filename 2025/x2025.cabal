@@ -78,6 +78,7 @@ executable x2025
     build-depends:    base ^>=4.18.2.1
                     , split
                     , hashmap
+                    , hashable
 
     -- Directories containing source files.
     hs-source-dirs:   app
